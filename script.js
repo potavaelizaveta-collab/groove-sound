@@ -124,14 +124,15 @@ for (let i = 0; i < 2; i++) {
         `SYNTH 0${i + 1} · ${k.toUpperCase()} ${state.voices[i][k].toFixed(1)}`
       )
     }
-    let h = area(x - 25, y - 25, 50, 50, k, () => {})
+    let h = area(x - 34, y - 30, 68, 60, k, () => {})
+    h.style.touchAction = 'none'
     h.addEventListener('pointerdown', (e) => {
       h.setPointerCapture(e.pointerId)
       let start = e.clientY,
         val = state.voices[i][k]
       h.onpointermove = (m) =>
         set(val + ((start - m.clientY) * (range[1] - range[0])) / 150)
-      h.onpointerup = () => (h.onpointermove = null)
+      h.onpointerup = h.onpointercancel = h.onlostpointercapture = () => (h.onpointermove = null)
     })
     h.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -172,7 +173,7 @@ for (let j = 0; j < 13; j++) {
       let p = svg.createSVGPoint()
       p.x = e.clientX
       p.y = e.clientY
-      let y = p.matrixTransform(svg.getScreenCTM().inverse()).y
+      let y = p.matrixTransform(e.currentTarget.getScreenCTM().inverse()).y
       state.notes[j] = Math.max(0, Math.min(7, Math.round((742 - y) / 25)))
     } else state.notes[j] = (state.notes[j] + 1) % 8
     drawNote()
@@ -219,4 +220,74 @@ document.addEventListener('keydown', (e) => {
     state.fx[i] = state.fx[i] ? 0 : [0.18, 0.22, 0.08, 0.16][i]
     update()
   }
+})
+
+// Reflow the original artwork without cloning controls or audio state.
+const artwork = Array.from(svg.children)
+const panelSpecs = {
+  header: [0, 0, 1648, 205, 0, 0, 600 / 1648],
+  record: [528, 220, 582, 582, 100, 85, 400 / 582],
+  transport: [8, 800, 570, 85, 12, 500, 1],
+  synth1: [8, 235, 562, 268, 12, 605, 1],
+  synth2: [4, 516, 562, 268, 12, 895, 1],
+  rhythm: [1055, 227, 576, 218, 12, 1185, 1],
+  sequencer: [1055, 465, 576, 315, 12, 1425, 1],
+  level: [590, 810, 815, 60, 12, 1765, 576 / 815],
+  caption: [1440, 810, 200, 65, 12, 1830, 1]
+}
+const panels = {}
+for (const name of Object.keys(panelSpecs)) {
+  const group = document.createElementNS(ns, 'g')
+  group.dataset.panel = name
+  panels[name] = group
+}
+for (const node of artwork) {
+  const box = node.getBBox()
+  const x = box.x + box.width / 2
+  const y = box.y + box.height / 2
+  if (box.width > 1000 && y >= 800) node.dataset.desktopOnly = ''
+  let name
+  if (node === svg.firstElementChild) name = 'background'
+  else if (node.id === 'record') name = 'record'
+  else if (y < 205) name = 'header'
+  else if (y >= 800) name = x < 590 ? 'transport' : x < 1410 ? 'level' : 'caption'
+  else if (x < 590) name = y < 510 ? 'synth1' : 'synth2'
+  else name = y < 455 ? 'rhythm' : 'sequencer'
+  if (name === 'background') node.dataset.background = ''
+  else panels[name].append(node)
+}
+Object.values(panels).forEach(group => svg.append(group))
+const mobileLayout = window.matchMedia('(max-width: 767px)')
+function layout() {
+  const mobile = mobileLayout.matches
+  svg.setAttribute('viewBox', mobile ? '0 0 600 1910' : '0 0 1648 928')
+  svg.setAttribute('width', mobile ? '600' : '1648')
+  svg.setAttribute('height', mobile ? '1910' : '928')
+  for (const [name, group] of Object.entries(panels)) {
+    const [x, y, , , left, top, scale] = panelSpecs[name]
+    if (mobile) group.setAttribute('transform', `translate(${left} ${top}) scale(${scale}) translate(${-x} ${-y})`)
+    else group.removeAttribute('transform')
+  }
+}
+mobileLayout.addEventListener('change', layout)
+layout()
+
+// The existing bottom bar doubles as a touch volume control.
+function setVolumeFromPointer(event) {
+  const point = svg.createSVGPoint()
+  point.x = event.clientX
+  point.y = event.clientY
+  const local = point.matrixTransform(volumeHit.getScreenCTM().inverse())
+  state.master = Math.max(0, Math.min(1, (local.x - 600) / 795))
+  update()
+  statusText(`VOLUME ${Math.round(state.master * 100)}%`)
+}
+volumeHit.setAttribute('aria-label', 'Master volume: drag to adjust')
+volumeHit.style.touchAction = 'none'
+volumeHit.addEventListener('pointerdown', event => {
+  volumeHit.setPointerCapture(event.pointerId)
+  setVolumeFromPointer(event)
+})
+volumeHit.addEventListener('pointermove', event => {
+  if (volumeHit.hasPointerCapture(event.pointerId)) setVolumeFromPointer(event)
 })
