@@ -1,14 +1,80 @@
 body{margin:0;background:#F4DFC0;color:#C91E30;font: bold 16px Arial,sans-serif}main{max-width:1700px;margin:auto}svg{width:100%;height:auto;display:block}svg [role=button]{cursor:pointer;outline:none}svg [role=button]:focus-visible{stroke:#222;stroke-width:3}#record{transform-origin:818.5px 511.5px;animation:spin 3s linear infinite;animation-play-state:paused}.playing #record{animation-play-state:running}@keyframes spin{to{transform:rotate(360deg)}}input{accent-color:#C91E30;width:100px}button{background:#C91E30;color:#F4DFC0;border:0;padding:10px;font-weight:bold;cursor:pointer}small{display:block;padding:8px 2%}
-html { -webkit-text-size-adjust: 100%; }
-main { width: 100%; }
-svg [role=button] { -webkit-tap-highlight-color: transparent; }
-@media (max-width: 767px) {
-  main { box-sizing: border-box; padding: 8px max(8px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
-  main > svg { width: 100%; height: auto; overflow: visible; }
-  svg [data-background] { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  #record { animation: none; }
-}
 
-@media (max-width: 767px) { svg [data-desktop-only] { display: none; } }
+/* The desktop SVG keeps its original layout. */
+.compact-synth { display: none; }
+@media (max-width: 1100px) {
+  main > svg { display: none; }
+  .compact-synth, .compact-synth * { box-sizing: border-box; }
+  .compact-synth { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 12px max(12px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .compact-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 12px; background: #C91E30; color: #F4DFC0; border-bottom: 5px solid #F4DFC0; outline: 2px solid #C91E30; outline-offset: 4px; margin: 4px 4px 8px; }
+  .compact-header h1 { font: italic 900 clamp(23px, 5.5vw, 38px)/.95 Arial,sans-serif; letter-spacing: -1.5px; margin: 0; }
+  .compact-header p { font-size: 9px; line-height: 1.25; margin: 0; flex-shrink: 0; }
+  .compact-record { display: grid; place-items: center; min-width: 0; }
+  .compact-synth button { font-family: inherit; font-weight: 900; color: #C91E30; background: transparent; border: 2px solid #C91E30; padding: 0; border-radius: 3px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .compact-synth button:focus-visible, .compact-synth [tabindex]:focus-visible { outline: 3px solid #193961; outline-offset: 3px; }
+  .compact-synth .record-button { width: min(100%, 340px); border: 0; line-height: 0; border-radius: 50%; }
+  .record-button svg { width: 100%; height: auto; }
+  .compact-disc { transform-origin: 818.5px 511.5px; animation: spin 3s linear infinite paused; }
+  .playing .compact-disc { animation-play-state: running; }
+  .compact-transport { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .transport-buttons { display: flex; }
+  .transport-buttons button { width: 48px; height: 48px; font-size: 23px; border-radius: 0; }
+  .transport-buttons button + button { border-left: 0; }
+  .transport-buttons button:first-child { border-radius: 4px 0 0 4px; }
+  .transport-buttons button:last-child { border-radius: 0 4px 4px 0; }
+  .compact-synth [aria-pressed="true"] { background: #C91E30; color: #F4DFC0; }
+  .tempo { display: flex; align-items: center; gap: 5px; }
+  .tempo button { width: 44px; height: 48px; font-size: 24px; }
+  .tempo-value { min-width: 70px; text-align: center; font-size: 14px; white-space: nowrap; }
+  .compact-panel { min-width: 0; overflow: hidden; border: 2px solid #C91E30; border-radius: 6px; }
+  .compact-panel h2 { margin: 0; padding: 10px 12px; background: #C91E30; color: #F4DFC0; font: 900 24px/1 Arial,sans-serif; }
+  .compact-rhythm h2, .compact-sequencer h2 { text-align: right; }
+  .synth-body { display: grid; gap: 12px; padding: 14px 12px; }
+  .wave-display { width: 100%; height: 84px; border: 1.5px solid #C91E30; border-radius: 3px; }
+  .wave-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .wave-buttons button { min-height: 44px; font-size: 12px; }
+  .knob-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .knob-control { display: grid; justify-items: center; min-width: 0; gap: 4px; }
+  .touch-knob { display: grid; place-items: center; width: 100%; min-width: 44px; height: 60px; cursor: ns-resize; touch-action: none; }
+  .knob-face { position: relative; display: block; width: 44px; height: 44px; border: 2px solid #C91E30; border-radius: 50%; }
+  .knob-needle { position: absolute; left: 19px; top: 5px; height: 15px; width: 3px; background: #C91E30; transform-origin: 1.5px 15px; }
+  .knob-label { font-size: 10px; }
+  .knob-control output { font-size: 10px; min-height: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .grid-scroll { min-width: 0; padding: 12px; }
+  .drum-grid { display: grid; grid-template-columns: 36px repeat(13, minmax(0, 1fr)); gap: clamp(2px, .6vw, 4px); width: 100%; min-width: 0; align-items: center; }
+  .drum-label { display: flex; align-items: center; font-size: 10px; position: sticky; left: 0; z-index: 1; background: #F4DFC0; }
+  .drum-grid .drum-step { width: 100%; min-width: 0; min-height: 0; aspect-ratio: 1; border-width: 1.5px; }
+  .melody-grid { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); width: 100%; min-width: 0; border-top: 1px solid #C91E30; border-left: 1px solid #C91E30; }
+  .melody-column { display: grid; grid-template-rows: repeat(8, 32px); }
+  .melody-column button { border: 0; border-right: 1px solid #C91E30; border-bottom: 1px solid #C91E30; border-radius: 0; min-width: 0; }
+  .melody-column button[aria-pressed="true"] { box-shadow: inset 3px 10px #F4DFC0, inset -3px -10px #F4DFC0; }
+  .drum-step.current-step { outline: 2px solid #C91E30; outline-offset: -6px; }
+  .melody-column.current-step { background: #c91e301a; }
+  .compact-footer { display: grid; gap: 14px; }
+  .compact-level { position: relative; overflow: hidden; min-height: 44px; border: 2px solid #C91E30; border-radius: 4px; touch-action: none; cursor: ew-resize; }
+  .compact-progress { position: absolute; left: 0; top: 0; bottom: 0; background: #C91E30; width: 0; pointer-events: none; }
+  .compact-footer > span { font-size: 11px; text-align: right; }
+}
+@media (min-width: 700px) and (max-width: 1100px) {
+  .compact-synth { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: 'header header' 'record synth1' 'transport synth2' 'rhythm rhythm' 'sequencer sequencer' 'footer footer'; gap: 24px; padding: 24px; align-items: start; }
+  .compact-header { grid-area: header; }
+  .compact-record { grid-area: record; align-self: center; }
+  .compact-transport { grid-area: transport; align-self: start; }
+  .synth-0 { grid-area: synth1; }
+  .synth-1 { grid-area: synth2; }
+  .compact-rhythm { grid-area: rhythm; }
+  .compact-sequencer { grid-area: sequencer; }
+  .compact-footer { grid-area: footer; }
+  .compact-header h1 { font-size: 54px; }
+  .compact-header p { font-size: 12px; }
+}
+@media (max-width: 359px) {
+  .compact-transport { justify-content: center; }
+  .compact-header p { font-size: 8px; }
+  .compact-header h1 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .compact-disc { animation: none; } }
+@media (max-width: 1100px) {
+  .compact-header h1 { flex: 1; min-width: 0; line-height: 0; }
+  .compact-header h1 svg { display: block; width: 100%; height: auto; }
+}
